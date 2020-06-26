@@ -4,6 +4,7 @@ import (
 	mapset "github.com/deckarep/golang-set"
 	"github.com/idena-network/idena-go/blockchain/types"
 	"github.com/idena-network/idena-go/common"
+	"github.com/idena-network/idena-go/core/state"
 	statsTypes "github.com/idena-network/idena-go/stats/types"
 	"github.com/idena-network/idena-indexer/db"
 	"math/big"
@@ -24,21 +25,23 @@ const (
 )
 
 type Stats struct {
-	ValidationStats        *statsTypes.ValidationStats
-	MinScoreForInvite      *float32
-	RewardsStats           *RewardsStats
-	MiningRewards          []*db.MiningReward
-	FinalCommittee         []common.Address
-	BurntPenaltiesByAddr   map[common.Address]*big.Int
-	BurntCoins             *big.Int
-	BurntCoinsByAddr       map[common.Address][]*db.BurntCoins
-	MintedCoins            *big.Int
-	BalanceUpdateAddrs     mapset.Set
-	ActivationTxTransfers  []db.ActivationTxTransfer
-	KillTxTransfers        []db.KillTxTransfer
-	KillInviteeTxTransfers []db.KillInviteeTxTransfer
-	BalanceUpdates         []*db.BalanceUpdate
-	CommitteeRewardShare   *big.Int
+	ValidationStats                        *statsTypes.ValidationStats
+	MinScoreForInvite                      *float32
+	RewardsStats                           *RewardsStats
+	MiningRewards                          []*db.MiningReward
+	FinalCommittee                         []common.Address
+	BurntPenaltiesByAddr                   map[common.Address]*big.Int
+	BurntCoins                             *big.Int
+	BurntCoinsByAddr                       map[common.Address][]*db.BurntCoins
+	MintedCoins                            *big.Int
+	BalanceUpdateAddrs                     mapset.Set
+	ActivationTxTransfers                  []db.ActivationTxTransfer
+	KillTxTransfers                        []db.KillTxTransfer
+	KillInviteeTxTransfers                 []db.KillInviteeTxTransfer
+	BalanceUpdates                         []*db.BalanceUpdate
+	CommitteeRewardShare                   *big.Int
+	IdentityStateChangesByTxHashAndAddress map[common.Hash]map[common.Address]*IdentityStateChange
+	FeesByTxHash                           map[common.Hash]*big.Int
 }
 
 type RewardsStats struct {
@@ -64,4 +67,9 @@ type RewardStats struct {
 	Balance *big.Int
 	Stake   *big.Int
 	Type    RewardType
+}
+
+type IdentityStateChange struct {
+	PrevState state.IdentityState
+	NewState  state.IdentityState
 }

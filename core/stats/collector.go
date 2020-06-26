@@ -26,6 +26,7 @@ type statsCollector struct {
 	invitationRewardsByAddrAndType  map[common.Address]map[RewardType]*RewardStats
 	pendingBalanceUpdates           []*db.BalanceUpdate
 	epochRewardBalanceUpdatesByAddr map[common.Address]*db.BalanceUpdate
+	pendingIdentityStates           []state.IdentityState
 }
 
 func NewStatsCollector() collector.StatsCollector {
@@ -520,6 +521,58 @@ func (c *statsCollector) getPenaltyIfNotKilled(addr common.Address, appState *ap
 
 func (c *statsCollector) SetCommitteeRewardShare(amount *big.Int) {
 	c.stats.CommitteeRewardShare = amount
+}
+
+func (c *statsCollector) BeginApplyingTx(tx *types.Transaction, appState *appstate.AppState) {
+	sender, _ := types.Sender(tx)
+	senderState := appState.State.GetIdentityState(sender)
+	c.pendingIdentityStates = []state.IdentityState{senderState}
+	if tx.To != nil && *tx.To != sender {
+		recipientState := appState.State.GetIdentityState(*tx.To)
+		c.pendingIdentityStates = append(c.pendingIdentityStates, recipientState)
+	}
+}
+
+func (c *statsCollector) CompleteApplyingTx(tx *types.Transaction, appState *appstate.AppState) {
+	var changesByAddress map[common.Address]*IdentityStateChange
+	initChangesByAddress := func() {
+		if changesByAddress != nil {
+			return
+		}
+		changesByAddress = make(map[common.Address]*IdentityStateChange)
+	}
+	sender, _ := types.Sender(tx)
+	senderState := appState.State.GetIdentityState(sender)
+	if c.pendingIdentityStates[0] != senderState {
+		initChangesByAddress()
+		changesByAddress[sender] = &IdentityStateChange{
+			PrevState: c.pendingIdentityStates[0],
+			NewState:  senderState,
+		}
+	}
+	if tx.To != nil && *tx.To != sender {
+		recipientState := appState.State.GetIdentityState(*tx.To)
+		if c.pendingIdentityStates[1] != recipientState {
+			initChangesByAddress()
+			changesByAddress[*tx.To] = &IdentityStateChange{
+				PrevState: c.pendingIdentityStates[1],
+				NewState:  recipientState,
+			}
+		}
+	}
+	if len(changesByAddress) > 0 {
+		if c.stats.IdentityStateChangesByTxHashAndAddress == nil {
+			c.stats.IdentityStateChangesByTxHashAndAddress = make(map[common.Hash]map[common.Address]*IdentityStateChange)
+		}
+		c.stats.IdentityStateChangesByTxHashAndAddress[tx.Hash()] = changesByAddress
+	}
+}
+
+func (c *statsCollector) AddTxFee(tx *types.Transaction, feeAmount *big.Int) {
+	if c.stats.FeesByTxHash == nil {
+		c.stats.FeesByTxHash = make(map[common.Hash]*big.Int)
+	}
+	c.stats.FeesByTxHash[tx.Hash()] = feeAmount
 }
 
 func (c *statsCollector) Disable() {

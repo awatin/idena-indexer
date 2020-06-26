@@ -58,49 +58,55 @@ CREATE TABLE IF NOT EXISTS dic_tx_types
 );
 
 INSERT INTO dic_tx_types
-values (0, 'SendTx')
+VALUES (0, 'SendTx')
 ON CONFLICT DO NOTHING;
 INSERT INTO dic_tx_types
-values (1, 'ActivationTx')
+VALUES (1, 'ActivationTx')
 ON CONFLICT DO NOTHING;
 INSERT INTO dic_tx_types
-values (2, 'InviteTx')
+VALUES (2, 'InviteTx')
 ON CONFLICT DO NOTHING;
 INSERT INTO dic_tx_types
-values (3, 'KillTx')
+VALUES (3, 'KillTx')
 ON CONFLICT DO NOTHING;
 INSERT INTO dic_tx_types
-values (4, 'SubmitFlipTx')
+VALUES (4, 'SubmitFlipTx')
 ON CONFLICT DO NOTHING;
 INSERT INTO dic_tx_types
-values (5, 'SubmitAnswersHashTx')
+VALUES (5, 'SubmitAnswersHashTx')
 ON CONFLICT DO NOTHING;
 INSERT INTO dic_tx_types
-values (6, 'SubmitShortAnswersTx')
+VALUES (6, 'SubmitShortAnswersTx')
 ON CONFLICT DO NOTHING;
 INSERT INTO dic_tx_types
-values (7, 'SubmitLongAnswersTx')
+VALUES (7, 'SubmitLongAnswersTx')
 ON CONFLICT DO NOTHING;
 INSERT INTO dic_tx_types
-values (8, 'EvidenceTx')
+VALUES (8, 'EvidenceTx')
 ON CONFLICT DO NOTHING;
 INSERT INTO dic_tx_types
-values (9, 'OnlineStatusTx')
+VALUES (9, 'OnlineStatusTx')
 ON CONFLICT DO NOTHING;
 INSERT INTO dic_tx_types
-values (10, 'KillInviteeTx')
+VALUES (10, 'KillInviteeTx')
 ON CONFLICT DO NOTHING;
 INSERT INTO dic_tx_types
-values (11, 'ChangeGodAddressTx')
+VALUES (11, 'ChangeGodAddressTx')
 ON CONFLICT DO NOTHING;
 INSERT INTO dic_tx_types
-values (12, 'BurnTx')
+VALUES (12, 'BurnTx')
 ON CONFLICT DO NOTHING;
 INSERT INTO dic_tx_types
-values (13, 'ChangeProfileTx')
+VALUES (13, 'ChangeProfileTx')
 ON CONFLICT DO NOTHING;
 INSERT INTO dic_tx_types
-values (14, 'DeleteFlipTx')
+VALUES (14, 'DeleteFlipTx')
+ON CONFLICT DO NOTHING;
+INSERT INTO dic_tx_types
+VALUES (15, 'DeployContract')
+ON CONFLICT DO NOTHING;
+INSERT INTO dic_tx_types
+VALUES (16, 'CallContract')
 ON CONFLICT DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS dic_flip_statuses
