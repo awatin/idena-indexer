@@ -1052,6 +1052,13 @@ func (a *cachedAccessor) TotalLatestBurntCoins(afterTime time.Time, startIndex u
 	return res.([]types.AddressBurntCoins), err
 }
 
+func (a *cachedAccessor) Contracts(status string, count uint64, continuationToken *string) ([]types.Contract, *string, error) {
+	res, nextContinuationToken, err := a.getOrLoadWithConToken("Contracts", func() (interface{}, *string, error) {
+		return a.Accessor.Contracts(status, count, continuationToken)
+	}, status, count, continuationToken)
+	return res.([]types.Contract), nextContinuationToken, err
+}
+
 func (a *cachedAccessor) Destroy() {
 	a.Accessor.Destroy()
 }

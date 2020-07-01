@@ -153,5 +153,7 @@ type Accessor interface {
 	TotalLatestBurntCoinsCount(afterTime time.Time) (uint64, error)
 	TotalLatestBurntCoins(afterTime time.Time, startIndex uint64, count uint64) ([]types.AddressBurntCoins, error)
 
+	Contracts(status string, count uint64, continuationToken *string) ([]types.Contract, *string, error)
+
 	Destroy()
 }

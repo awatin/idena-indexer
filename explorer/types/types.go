@@ -432,3 +432,7 @@ type StrValueCount struct {
 	Value string `json:"value"`
 	Count uint32 `json:"count"`
 }
+
+type Contract struct {
+	// todo
+} // @Name Contract

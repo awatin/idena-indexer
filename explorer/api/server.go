@@ -300,6 +300,8 @@ func (s *httpServer) InitRouter(router *mux.Router) {
 	//router.Path(strings.ToLower("/TotalLatestBurntCoins")).
 	//	Queries("skip", "{skip}", "limit", "{limit}").
 	//	HandlerFunc(s.totalLatestBurntCoins)
+
+	router.Path(strings.ToLower("/Contracts")).HandlerFunc(s.contracts)
 }
 
 func (s *httpServer) dumpLink(w http.ResponseWriter, r *http.Request) {
@@ -711,7 +713,7 @@ func (s *httpServer) epochIdentitiesCount(w http.ResponseWriter, r *http.Request
 // @Param prevStates[] query []string false "identity previous state filter"
 // @Success 200 {object} server.ResponsePage{result=[]types.EpochIdentity}
 // @Failure 400 "Bad request"
-// @Failure 429 "Request number limit exceeded"types.EpochIdentity
+// @Failure 429 "Request number limit exceeded"
 // @Failure 500 "Internal server error"
 // @Failure 503 "Service unavailable"
 // @Router /Epoch/{epoch}/Identities [get]
@@ -2207,4 +2209,28 @@ func (s *httpServer) getOffsetUTC() time.Time {
 
 func getOffsetUTC(hours int) time.Time {
 	return time.Now().UTC().Add(-time.Hour * time.Duration(hours))
+}
+
+// @Tags Contracts
+// @Id Contracts
+// @Param status query string false "filter by status"
+// @Param limit query integer true "items to take"
+// @Param continuationToken query string false "continuation token to get next page items"
+// @Success 200 {object} server.ResponsePage{result=[]types.Contract}
+// @Failure 400 "Bad request"
+// @Failure 429 "Request number limit exceeded"
+// @Failure 500 "Internal server error"
+// @Failure 503 "Service unavailable"
+// @Router /Contracts [get]
+func (s *httpServer) contracts(w http.ResponseWriter, r *http.Request) {
+	id := s.pm.Start("contracts", r.RequestURI)
+	defer s.pm.Complete(id)
+	count, continuationToken, err := server.ReadPaginatorParams(r.Form)
+	if err != nil {
+		server.WriteErrorResponse(w, err, s.log)
+		return
+	}
+	vars := mux.Vars(r)
+	resp, nextContinuationToken, err := s.db.Contracts(vars["status"], count, continuationToken)
+	server.WriteResponsePage(w, resp, nextContinuationToken, err, s.log)
 }
