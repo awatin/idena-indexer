@@ -106,7 +106,8 @@ func (a *postgresAccessor) EpochIdentityFlipsWithRewardFlag(epoch uint64, addres
 		item := types.FlipWithRewardFlag{}
 		var timestamp int64
 		words := types.FlipWords{}
-		err := rows.Scan(&item.Cid,
+		err := rows.Scan(
+			&item.Cid,
 			&item.Size,
 			&item.Author,
 			&item.Epoch,
@@ -125,7 +126,9 @@ func (a *postgresAccessor) EpochIdentityFlipsWithRewardFlag(epoch uint64, addres
 			&words.Word2.Name,
 			&words.Word2.Desc,
 			&item.WithPrivatePart,
-			&item.Rewarded)
+			&item.Grade,
+			&item.Rewarded,
+		)
 		if err != nil {
 			return nil, err
 		}

@@ -2680,6 +2680,14 @@ BEGIN
                                      b.epoch + 1 > l_epoch);
 
     delete
+    from reported_flip_rewards
+    where flip_tx_id in
+          (select t.id
+           from transactions t
+                    join blocks b on b.height = t.block_height and
+                                     b.epoch + 1 > l_epoch);
+
+    delete
     from flip_summaries
     where flip_tx_id in
           (select t.id
