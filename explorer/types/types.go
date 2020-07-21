@@ -406,6 +406,12 @@ type FlipWithRewardFlag struct {
 	Rewarded bool `json:"rewarded"`
 } // @Name RewardedFlip
 
+type ReportedFlipReward struct {
+	Cid     string          `json:"cid"`
+	Balance decimal.Decimal `json:"balance" swaggertype:"string"`
+	Stake   decimal.Decimal `json:"stake" swaggertype:"string"`
+} // @Name ReportedFlipReward
+
 type InviteWithRewardFlag struct {
 	Invite
 	RewardType string `json:"rewardType,omitempty" enums:",Invitations,Invitations2,Invitations3"`

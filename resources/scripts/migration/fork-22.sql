@@ -18,7 +18,5 @@ SET grade = (case
 ALTER TABLE flips
     DROP COLUMN wrong_words;
 
-DROP INDEX flips_wrong_words_idx;
-
-DROP TYPE tp_answer;
-DROP TYPE tp_flip_state;
+DROP TYPE tp_answer CASCADE;
+DROP TYPE tp_flip_state CASCADE;
