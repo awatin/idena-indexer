@@ -2086,7 +2086,7 @@ paths:
           description: Service unavailable
       tags:
       - Identity
-  /Epoch/{epoch}/Identity/{address}/ReportedFlipRewards:
+  /Epoch/{epoch}/Identity/{address}/ReportRewards:
     get:
       operationId: EpochIdentityReportedFlipRewards
       parameters:

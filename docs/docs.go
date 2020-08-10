@@ -2022,7 +2022,7 @@ var doc = `{
                 }
             }
         },
-        "/Epoch/{epoch}/Identity/{address}/ReportedFlipRewards": {
+        "/Epoch/{epoch}/Identity/{address}/ReportRewards": {
             "get": {
                 "tags": [
                     "Identity"

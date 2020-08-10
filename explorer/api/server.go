@@ -178,7 +178,7 @@ func (s *httpServer) InitRouter(router *mux.Router) {
 		HandlerFunc(s.epochIdentityRewards)
 	router.Path(strings.ToLower("/Epoch/{epoch:[0-9]+}/Identity/{address}/RewardedFlips")).
 		HandlerFunc(s.epochIdentityFlipsWithRewardFlag)
-	router.Path(strings.ToLower("/Epoch/{epoch:[0-9]+}/Identity/{address}/ReportedFlipRewards")).
+	router.Path(strings.ToLower("/Epoch/{epoch:[0-9]+}/Identity/{address}/ReportRewards")).
 		HandlerFunc(s.epochIdentityReportedFlipRewards)
 	router.Path(strings.ToLower("/Epoch/{epoch:[0-9]+}/Identity/{address}/Authors/Bad")).
 		HandlerFunc(s.epochIdentityBadAuthor)
@@ -1281,7 +1281,7 @@ func (s *httpServer) epochIdentityFlipsWithRewardFlag(w http.ResponseWriter, r *
 // @Failure 429 "Request number limit exceeded"
 // @Failure 500 "Internal server error"
 // @Failure 503 "Service unavailable"
-// @Router /Epoch/{epoch}/Identity/{address}/ReportedFlipRewards [get]
+// @Router /Epoch/{epoch}/Identity/{address}/ReportRewards [get]
 func (s *httpServer) epochIdentityReportedFlipRewards(w http.ResponseWriter, r *http.Request) {
 	id := s.pm.Start("epochIdentityReportedFlipRewards", r.RequestURI)
 	defer s.pm.Complete(id)

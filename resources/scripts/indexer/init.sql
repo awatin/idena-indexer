@@ -181,7 +181,7 @@ INSERT INTO dic_epoch_reward_types
 values (8, 'SavedInviteWin')
 ON CONFLICT DO NOTHING;
 INSERT INTO dic_epoch_reward_types
-values (9, 'ReportedFlips')
+values (9, 'Reports')
 ON CONFLICT DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS dic_bad_author_reasons
