@@ -2086,6 +2086,65 @@ var doc = `{
                 }
             }
         },
+        "/Epoch/{epoch}/Identity/{address}/ReportRewards": {
+            "get": {
+                "tags": [
+                    "Identity"
+                ],
+                "operationId": "EpochIdentityReportedFlipRewards",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "epoch",
+                        "name": "epoch",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "address",
+                        "name": "address",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "result": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/ReportedFlipReward"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "429": {
+                        "description": "Request number limit exceeded"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    },
+                    "503": {
+                        "description": "Service unavailable"
+                    }
+                }
+            }
+        },
         "/Epoch/{epoch}/Identity/{address}/RewardedFlips": {
             "get": {
                 "tags": [
@@ -4317,6 +4376,9 @@ var doc = `{
                         "Right"
                     ]
                 },
+                "flipGrade": {
+                    "type": "integer"
+                },
                 "flipStatus": {
                     "type": "string",
                     "enum": [
@@ -4327,6 +4389,7 @@ var doc = `{
                     ]
                 },
                 "flipWrongWords": {
+                    "description": "Deprecated",
                     "type": "boolean"
                 },
                 "point": {
@@ -4340,7 +4403,11 @@ var doc = `{
                         "Right"
                     ]
                 },
+                "respGrade": {
+                    "type": "integer"
+                },
                 "respWrongWords": {
+                    "description": "Deprecated",
                     "type": "boolean"
                 }
             }
@@ -4761,6 +4828,9 @@ var doc = `{
                 "epoch": {
                     "type": "integer"
                 },
+                "grade": {
+                    "type": "integer"
+                },
                 "size": {
                     "type": "integer"
                 },
@@ -4789,6 +4859,7 @@ var doc = `{
                     "$ref": "#/definitions/FlipWords"
                 },
                 "wrongWords": {
+                    "description": "Deprecated",
                     "type": "boolean"
                 },
                 "wrongWordsVotes": {
@@ -4875,6 +4946,9 @@ var doc = `{
                 "epoch": {
                     "type": "integer"
                 },
+                "grade": {
+                    "type": "integer"
+                },
                 "icon": {
                     "type": "string"
                 },
@@ -4909,6 +4983,7 @@ var doc = `{
                     "$ref": "#/definitions/FlipWords"
                 },
                 "wrongWords": {
+                    "description": "Deprecated",
                     "type": "boolean"
                 },
                 "wrongWordsVotes": {
@@ -5110,6 +5185,20 @@ var doc = `{
                 }
             }
         },
+        "ReportedFlipReward": {
+            "type": "object",
+            "properties": {
+                "balance": {
+                    "type": "string"
+                },
+                "cid": {
+                    "type": "string"
+                },
+                "stake": {
+                    "type": "string"
+                }
+            }
+        },
         "Response": {
             "type": "object",
             "properties": {
@@ -5190,6 +5279,9 @@ var doc = `{
                 "epoch": {
                     "type": "integer"
                 },
+                "grade": {
+                    "type": "integer"
+                },
                 "icon": {
                     "type": "string"
                 },
@@ -5227,6 +5319,7 @@ var doc = `{
                     "$ref": "#/definitions/FlipWords"
                 },
                 "wrongWords": {
+                    "description": "Deprecated",
                     "type": "boolean"
                 },
                 "wrongWordsVotes": {
@@ -5437,7 +5530,7 @@ var doc = `{
                     "type": "string"
                 },
                 "transfer": {
-                    "description": "todo deprecated",
+                    "description": "Deprecated",
                     "type": "string"
                 },
                 "type": {

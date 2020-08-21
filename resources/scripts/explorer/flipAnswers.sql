@@ -1,11 +1,13 @@
 select ''                     cid,
        ad.address,
        ida.name               resp_answer,
-       a.wrong_words,
+       a.grade = 1            resp_reported,
        coalesce(fda.name, '') flip_answer,
-       coalesce(f.wrong_words, false),
+       f.grade = 1            flip_reported,
        coalesce(dfs.name, '') status,
-       a.point
+       a.point,
+       coalesce(a.grade, 0)   resp_grade,
+       coalesce(f.grade, 0)   flip_grade
 from answers a
          join flips f on f.tx_id = a.flip_tx_id and lower(f.cid) = lower($1)
          join address_states s on s.id = a.ei_address_state_id
