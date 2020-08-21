@@ -42,6 +42,8 @@ type Stats struct {
 	CommitteeRewardShare                   *big.Int
 	IdentityStateChangesByTxHashAndAddress map[common.Hash]map[common.Address]*IdentityStateChange
 	FeesByTxHash                           map[common.Hash]*big.Int
+	FactEvidenceContracts                  []*db.FactEvidenceContract
+	FactEvidenceContractCallStarts         []*db.FactEvidenceContractCallStart
 }
 
 type RewardsStats struct {

@@ -108,6 +108,9 @@ ON CONFLICT DO NOTHING;
 INSERT INTO dic_tx_types
 VALUES (16, 'CallContract')
 ON CONFLICT DO NOTHING;
+INSERT INTO dic_tx_types
+VALUES (17, 'TerminateContract')
+ON CONFLICT DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS dic_flip_statuses
 (
@@ -243,9 +246,6 @@ ON CONFLICT DO NOTHING;
 INSERT INTO dic_balance_update_reasons
 values (9, 'DustClearingReason')
 ON CONFLICT DO NOTHING;
--- Table: epochs
-
--- DROP TABLE epochs;
 
 CREATE TABLE IF NOT EXISTS epochs
 (
@@ -260,10 +260,6 @@ CREATE TABLE IF NOT EXISTS epochs
 
 ALTER TABLE epochs
     OWNER to postgres;
-
--- Table: blocks
-
--- DROP TABLE blocks;
 
 CREATE TABLE IF NOT EXISTS blocks
 (
@@ -2037,6 +2033,35 @@ $$
     END
 $$;
 
+DO
+$$
+    BEGIN
+        CREATE TYPE tp_fact_evidence_contract AS
+        (
+            tx_hash          text,
+            contract_address text,
+            start_time       bigint
+        );
+    EXCEPTION
+        WHEN duplicate_object THEN null;
+    END
+$$;
+
+DO
+$$
+    BEGIN
+        CREATE TYPE tp_fact_evidence_contract_call_start AS
+        (
+            tx_hash            text,
+            contract_address   text,
+            start_block_height bigint,
+            voting_min_payment numeric
+        );
+    EXCEPTION
+        WHEN duplicate_object THEN null;
+    END
+$$;
+
 -- PROCEDURE: save_mining_rewards
 
 CREATE OR REPLACE PROCEDURE save_mining_rewards(height bigint, mr tp_mining_reward[])
@@ -2255,7 +2280,9 @@ CREATE OR REPLACE FUNCTION save_addrs_and_txs(height bigint,
                                               p_activation_txs tp_activation_tx[],
                                               p_kill_invitee_txs tp_kill_invitee_tx[],
                                               p_become_online_txs character(66)[],
-                                              p_become_offline_txs character(66)[])
+                                              p_become_offline_txs character(66)[],
+                                              p_fact_evidence_contracts tp_fact_evidence_contract[],
+                                              p_fact_evidence_contract_call_starts tp_fact_evidence_contract_call_start[])
     RETURNS tp_tx_hash_id[]
     LANGUAGE 'plpgsql'
 AS
@@ -2396,6 +2423,14 @@ BEGIN
             end loop;
     end if;
 
+    if p_fact_evidence_contracts is not null then
+        call save_fact_evidence_contracts(height, p_fact_evidence_contracts);
+    end if;
+
+    if p_fact_evidence_contract_call_starts is not null then
+        call save_fact_evidence_contract_call_starts(height, p_fact_evidence_contract_call_starts);
+    end if;
+
     return res;
 END
 $BODY$;
@@ -2483,7 +2518,7 @@ AS
 $BODY$
 DECLARE
     l_kill_invitee_tx tp_kill_invitee_tx;
-    l_invite_tx_id  bigint;
+    l_invite_tx_id    bigint;
 BEGIN
     for i in 1..cardinality(p_kill_invitee_txs)
         loop

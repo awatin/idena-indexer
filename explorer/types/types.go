@@ -434,5 +434,7 @@ type StrValueCount struct {
 }
 
 type Contract struct {
+	ContractAddress string          `json:"contractAddress"`
+	Balance         decimal.Decimal `json:"balance" swaggertype:"string"`
 	// todo
 } // @Name Contract

@@ -34,30 +34,32 @@ type RestoredData struct {
 }
 
 type Data struct {
-	Epoch                  uint64
-	ValidationTime         big.Int
-	Block                  Block
-	ActivationTxTransfers  []ActivationTxTransfer
-	KillTxTransfers        []KillTxTransfer
-	KillInviteeTxTransfers []KillInviteeTxTransfer
-	ActivationTxs          []ActivationTx
-	KillInviteeTxs         []KillInviteeTx
-	BecomeOnlineTxs        []string
-	BecomeOfflineTxs       []string
-	SubmittedFlips         []Flip
-	DeletedFlips           []DeletedFlip
-	FlipKeys               []FlipKey
-	FlipsWords             []FlipWords
-	Addresses              []Address
-	ChangedBalances        []Balance
-	Coins                  Coins
-	Penalty                *Penalty
-	BurntPenalties         []Penalty
-	MiningRewards          []*MiningReward
-	BurntCoinsPerAddr      map[common.Address][]*BurntCoins
-	BalanceUpdates         []*BalanceUpdate
-	CommitteeRewardShare   *big.Int
-	EpochResult            *EpochResult
+	Epoch                          uint64
+	ValidationTime                 big.Int
+	Block                          Block
+	ActivationTxTransfers          []ActivationTxTransfer
+	KillTxTransfers                []KillTxTransfer
+	KillInviteeTxTransfers         []KillInviteeTxTransfer
+	ActivationTxs                  []ActivationTx
+	KillInviteeTxs                 []KillInviteeTx
+	BecomeOnlineTxs                []string
+	BecomeOfflineTxs               []string
+	SubmittedFlips                 []Flip
+	DeletedFlips                   []DeletedFlip
+	FlipKeys                       []FlipKey
+	FlipsWords                     []FlipWords
+	Addresses                      []Address
+	ChangedBalances                []Balance
+	Coins                          Coins
+	Penalty                        *Penalty
+	BurntPenalties                 []Penalty
+	MiningRewards                  []*MiningReward
+	BurntCoinsPerAddr              map[common.Address][]*BurntCoins
+	BalanceUpdates                 []*BalanceUpdate
+	CommitteeRewardShare           *big.Int
+	FactEvidenceContracts          []*FactEvidenceContract
+	FactEvidenceContractCallStarts []*FactEvidenceContractCallStart
+	EpochResult                    *EpochResult
 }
 
 type EpochRewards struct {
@@ -333,4 +335,17 @@ type EpochResult struct {
 	FailedValidation  bool
 	EpochRewards      *EpochRewards
 	MinScoreForInvite float32
+}
+
+type FactEvidenceContract struct {
+	TxHash          common.Hash
+	ContractAddress common.Address
+	StartTime       uint64
+}
+
+type FactEvidenceContractCallStart struct {
+	TxHash           common.Hash
+	ContractAddress  common.Address
+	StartHeight      uint64
+	VotingMinPayment *big.Int // todo
 }

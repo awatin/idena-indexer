@@ -21,12 +21,23 @@ import (
 )
 
 type statsCollector struct {
-	stats                           *Stats
-	statsEnabled                    bool
+	stats        *Stats
+	statsEnabled bool
+	pending      *pending
+}
+
+type pending struct {
 	invitationRewardsByAddrAndType  map[common.Address]map[RewardType]*RewardStats
-	pendingBalanceUpdates           []*db.BalanceUpdate
+	balanceUpdates                  []*db.BalanceUpdate
 	epochRewardBalanceUpdatesByAddr map[common.Address]*db.BalanceUpdate
-	pendingIdentityStates           []state.IdentityState
+	identityStates                  []state.IdentityState
+	tx                              *pendingTx
+}
+
+type pendingTx struct {
+	tx                            *types.Transaction
+	factEvidenceContractDeploy    *db.FactEvidenceContract
+	factEvidenceContractCallStart *db.FactEvidenceContractCallStart
 }
 
 func NewStatsCollector() collector.StatsCollector {
@@ -35,6 +46,7 @@ func NewStatsCollector() collector.StatsCollector {
 
 func (c *statsCollector) EnableCollecting() {
 	c.stats = &Stats{}
+	c.pending = &pending{}
 }
 
 func (c *statsCollector) initRewardStats() {
@@ -45,10 +57,10 @@ func (c *statsCollector) initRewardStats() {
 }
 
 func (c *statsCollector) initInvitationRewardsByAddrAndType() {
-	if c.invitationRewardsByAddrAndType != nil {
+	if c.pending.invitationRewardsByAddrAndType != nil {
 		return
 	}
-	c.invitationRewardsByAddrAndType = make(map[common.Address]map[RewardType]*RewardStats)
+	c.pending.invitationRewardsByAddrAndType = make(map[common.Address]map[RewardType]*RewardStats)
 }
 
 func (c *statsCollector) SetValidation(validation *statsTypes.ValidationStats) {
@@ -207,7 +219,7 @@ func (c *statsCollector) increaseInvitationRewardIfExists(rewardsStats *RewardSt
 		return false
 	}
 	c.initInvitationRewardsByAddrAndType()
-	addrInvitationRewardsByType, ok := c.invitationRewardsByAddrAndType[rewardsStats.Address]
+	addrInvitationRewardsByType, ok := c.pending.invitationRewardsByAddrAndType[rewardsStats.Address]
 	if ok {
 		if ir, ok := addrInvitationRewardsByType[rewardsStats.Type]; ok {
 			ir.Balance.Add(ir.Balance, rewardsStats.Balance)
@@ -218,7 +230,7 @@ func (c *statsCollector) increaseInvitationRewardIfExists(rewardsStats *RewardSt
 		addrInvitationRewardsByType = make(map[RewardType]*RewardStats)
 	}
 	addrInvitationRewardsByType[rewardsStats.Type] = rewardsStats
-	c.invitationRewardsByAddrAndType[rewardsStats.Address] = addrInvitationRewardsByType
+	c.pending.invitationRewardsByAddrAndType[rewardsStats.Address] = addrInvitationRewardsByType
 	return false
 }
 
@@ -351,9 +363,7 @@ func (c *statsCollector) initBalanceUpdatesByAddr() {
 
 func (c *statsCollector) CompleteCollecting() {
 	c.stats = nil
-	c.invitationRewardsByAddrAndType = nil
-	c.pendingBalanceUpdates = nil
-	c.epochRewardBalanceUpdatesByAddr = nil
+	c.pending = nil
 }
 
 func (c *statsCollector) AfterAddStake(addr common.Address, amount *big.Int, appState *appstate.AppState) {
@@ -447,17 +457,17 @@ func (c *statsCollector) CompleteBalanceUpdate(appState *appstate.AppState) {
 			c.addBurntCoins(balanceUpdate.Address, balanceUpdate.BalanceOld, db.DustClearingBurntCoins, nil)
 		}
 		if balanceUpdate.Reason == db.EpochRewardReason {
-			if c.epochRewardBalanceUpdatesByAddr == nil {
-				c.epochRewardBalanceUpdatesByAddr = map[common.Address]*db.BalanceUpdate{
+			if c.pending.epochRewardBalanceUpdatesByAddr == nil {
+				c.pending.epochRewardBalanceUpdatesByAddr = map[common.Address]*db.BalanceUpdate{
 					balanceUpdate.Address: balanceUpdate,
 				}
-			} else if bu, ok := c.epochRewardBalanceUpdatesByAddr[balanceUpdate.Address]; ok {
+			} else if bu, ok := c.pending.epochRewardBalanceUpdatesByAddr[balanceUpdate.Address]; ok {
 				bu.BalanceNew = balanceUpdate.BalanceNew
 				bu.StakeNew = balanceUpdate.StakeNew
 				bu.PenaltyNew = balanceUpdate.PenaltyNew
 				continue
 			} else {
-				c.epochRewardBalanceUpdatesByAddr[balanceUpdate.Address] = balanceUpdate
+				c.pending.epochRewardBalanceUpdatesByAddr[balanceUpdate.Address] = balanceUpdate
 			}
 		}
 		c.stats.BalanceUpdates = append(c.stats.BalanceUpdates, balanceUpdate)
@@ -484,7 +494,7 @@ func (c *statsCollector) addPendingBalanceUpdate(
 	reason db.BalanceUpdateReason,
 	txHash *common.Hash,
 ) {
-	c.pendingBalanceUpdates = append(c.pendingBalanceUpdates, &db.BalanceUpdate{
+	c.pending.balanceUpdates = append(c.pending.balanceUpdates, &db.BalanceUpdate{
 		Address:    addr,
 		BalanceOld: appState.State.GetBalance(addr),
 		StakeOld:   c.getStakeIfNotKilled(addr, appState),
@@ -495,13 +505,13 @@ func (c *statsCollector) addPendingBalanceUpdate(
 }
 
 func (c *statsCollector) completeBalanceUpdates(appState *appstate.AppState) []*db.BalanceUpdate {
-	for _, balanceUpdate := range c.pendingBalanceUpdates {
+	for _, balanceUpdate := range c.pending.balanceUpdates {
 		balanceUpdate.BalanceNew = appState.State.GetBalance(balanceUpdate.Address)
 		balanceUpdate.StakeNew = c.getStakeIfNotKilled(balanceUpdate.Address, appState)
 		balanceUpdate.PenaltyNew = c.getPenaltyIfNotKilled(balanceUpdate.Address, appState)
 	}
-	balanceUpdates := c.pendingBalanceUpdates
-	c.pendingBalanceUpdates = nil
+	balanceUpdates := c.pending.balanceUpdates
+	c.pending.balanceUpdates = nil
 	return balanceUpdates
 }
 
@@ -524,16 +534,20 @@ func (c *statsCollector) SetCommitteeRewardShare(amount *big.Int) {
 }
 
 func (c *statsCollector) BeginApplyingTx(tx *types.Transaction, appState *appstate.AppState) {
+	c.pending.tx = &pendingTx{
+		tx: tx,
+	}
 	sender, _ := types.Sender(tx)
 	senderState := appState.State.GetIdentityState(sender)
-	c.pendingIdentityStates = []state.IdentityState{senderState}
+	c.pending.identityStates = []state.IdentityState{senderState}
 	if tx.To != nil && *tx.To != sender {
 		recipientState := appState.State.GetIdentityState(*tx.To)
-		c.pendingIdentityStates = append(c.pendingIdentityStates, recipientState)
+		c.pending.identityStates = append(c.pending.identityStates, recipientState)
 	}
 }
 
-func (c *statsCollector) CompleteApplyingTx(tx *types.Transaction, appState *appstate.AppState) {
+func (c *statsCollector) CompleteApplyingTx(appState *appstate.AppState) {
+	tx := c.pending.tx.tx
 	var changesByAddress map[common.Address]*IdentityStateChange
 	initChangesByAddress := func() {
 		if changesByAddress != nil {
@@ -543,19 +557,19 @@ func (c *statsCollector) CompleteApplyingTx(tx *types.Transaction, appState *app
 	}
 	sender, _ := types.Sender(tx)
 	senderState := appState.State.GetIdentityState(sender)
-	if c.pendingIdentityStates[0] != senderState {
+	if c.pending.identityStates[0] != senderState {
 		initChangesByAddress()
 		changesByAddress[sender] = &IdentityStateChange{
-			PrevState: c.pendingIdentityStates[0],
+			PrevState: c.pending.identityStates[0],
 			NewState:  senderState,
 		}
 	}
 	if tx.To != nil && *tx.To != sender {
 		recipientState := appState.State.GetIdentityState(*tx.To)
-		if c.pendingIdentityStates[1] != recipientState {
+		if c.pending.identityStates[1] != recipientState {
 			initChangesByAddress()
 			changesByAddress[*tx.To] = &IdentityStateChange{
-				PrevState: c.pendingIdentityStates[1],
+				PrevState: c.pending.identityStates[1],
 				NewState:  recipientState,
 			}
 		}
@@ -566,13 +580,44 @@ func (c *statsCollector) CompleteApplyingTx(tx *types.Transaction, appState *app
 		}
 		c.stats.IdentityStateChangesByTxHashAndAddress[tx.Hash()] = changesByAddress
 	}
+	c.pending.tx = nil
 }
 
-func (c *statsCollector) AddTxFee(tx *types.Transaction, feeAmount *big.Int) {
+func (c *statsCollector) AddTxFee(feeAmount *big.Int) {
+	tx := c.pending.tx.tx
 	if c.stats.FeesByTxHash == nil {
 		c.stats.FeesByTxHash = make(map[common.Hash]*big.Int)
 	}
 	c.stats.FeesByTxHash[tx.Hash()] = feeAmount
+}
+
+func (c *statsCollector) AddFactEvidenceContractDeploy(contractAddress common.Address, startTime uint64) {
+	tx := c.pending.tx.tx
+	c.pending.tx.factEvidenceContractDeploy = &db.FactEvidenceContract{
+		TxHash:          tx.Hash(),
+		ContractAddress: contractAddress,
+		StartTime:       startTime,
+	}
+}
+
+func (c *statsCollector) AddFactEvidenceContractCallStart(contractAddress common.Address, startBlock uint64) {
+	tx := c.pending.tx.tx
+	c.pending.tx.factEvidenceContractCallStart = &db.FactEvidenceContractCallStart{
+		TxHash:          tx.Hash(),
+		ContractAddress: contractAddress,
+		StartHeight:     startBlock,
+	}
+}
+
+func (c *statsCollector) AddTxReceipt(txReceipt *types.TxReceipt) {
+	if txReceipt.Success {
+		if c.pending.tx.factEvidenceContractDeploy != nil {
+			c.stats.FactEvidenceContracts = append(c.stats.FactEvidenceContracts, c.pending.tx.factEvidenceContractDeploy)
+		}
+		if c.pending.tx.factEvidenceContractCallStart != nil {
+			c.stats.FactEvidenceContractCallStarts = append(c.stats.FactEvidenceContractCallStarts, c.pending.tx.factEvidenceContractCallStart)
+		}
+	}
 }
 
 func (c *statsCollector) Disable() {

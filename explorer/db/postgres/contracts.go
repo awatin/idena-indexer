@@ -45,20 +45,23 @@ func (a *postgresAccessor) Contracts(status string, count uint64, continuationTo
 	defer rows.Close()
 	var res []types.Contract
 	var nextBalance decimal.Decimal
+	var nextContractId uint64
 	for rows.Next() {
 		item := types.Contract{}
 		err = rows.Scan(
-			// todo
-			&nextBalance,
+			&nextContractId,
+			&item.ContractAddress,
+			&item.Balance,
 		)
 		if err != nil {
 			return nil, nil, err
 		}
+		nextBalance = item.Balance
 		res = append(res, item)
 	}
 	var nextContinuationToken *string
 	if len(res) > 0 && len(res) == int(count)+1 {
-		t := strconv.FormatUint(*contractId, 10) + "-" + nextBalance.String()
+		t := strconv.FormatUint(nextContractId, 10) + "-" + nextBalance.String()
 		nextContinuationToken = &t
 		res = res[:len(res)-1]
 	}

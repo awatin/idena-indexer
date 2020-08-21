@@ -148,6 +148,16 @@ func (v *FailedFlipContent) Value() (driver.Value, error) {
 	), nil
 }
 
+func (v *FactEvidenceContract) Value() (driver.Value, error) {
+	return fmt.Sprintf("(%v,%v,%v)", conversion.ConvertHash(v.TxHash), conversion.ConvertAddress(v.ContractAddress),
+		v.StartTime), nil
+}
+
+func (v *FactEvidenceContractCallStart) Value() (driver.Value, error) {
+	return fmt.Sprintf("(%v,%v,%v,%v)", conversion.ConvertHash(v.TxHash), conversion.ConvertAddress(v.ContractAddress),
+		v.StartHeight, blockchain.ConvertToFloat(v.VotingMinPayment)), nil
+}
+
 type flipContent struct {
 	Cid    string  `json:"cid"`
 	Pics   []bytes `json:"pics"`
