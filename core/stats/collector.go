@@ -65,10 +65,10 @@ func (c *statsCollector) initInvitationRewardsByAddrAndType() {
 }
 
 func (c *statsCollector) initReportedFlipRewardsByAddr() {
-	if c.reportedFlipRewardsByAddr != nil {
+	if c.pending.reportedFlipRewardsByAddr != nil {
 		return
 	}
-	c.reportedFlipRewardsByAddr = make(map[common.Address]*RewardStats)
+	c.pending.reportedFlipRewardsByAddr = make(map[common.Address]*RewardStats)
 }
 
 func (c *statsCollector) SetValidation(validation *statsTypes.ValidationStats) {
@@ -274,13 +274,13 @@ func (c *statsCollector) increaseReportedFlipRewardIfExists(rewardsStats *Reward
 		return false
 	}
 	c.initReportedFlipRewardsByAddr()
-	reportedFlipRewards, ok := c.reportedFlipRewardsByAddr[rewardsStats.Address]
+	reportedFlipRewards, ok := c.pending.reportedFlipRewardsByAddr[rewardsStats.Address]
 	if ok {
 		reportedFlipRewards.Balance.Add(reportedFlipRewards.Balance, rewardsStats.Balance)
 		reportedFlipRewards.Stake.Add(reportedFlipRewards.Stake, rewardsStats.Stake)
 		return true
 	}
-	c.reportedFlipRewardsByAddr[rewardsStats.Address] = rewardsStats
+	c.pending.reportedFlipRewardsByAddr[rewardsStats.Address] = rewardsStats
 	return false
 }
 

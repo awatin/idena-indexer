@@ -506,7 +506,7 @@ func (indexer *Indexer) convertBlock(
 		ValidatorsCount:      len(indexer.statsHolder().GetStats().FinalCommittee),
 		VrfProposerThreshold: ctx.prevStateReadOnly.State.VrfProposerThreshold(),
 		ProposerVrfScore:     proposerVrfScore,
-		FeeRate:              blockchain.ConvertToFloat(ctx.prevStateReadOnly.State.FeePerByte()),
+		FeeRate:              blockchain.ConvertToFloat(ctx.prevStateReadOnly.State.FeePerGas()),
 	}, nil
 }
 
